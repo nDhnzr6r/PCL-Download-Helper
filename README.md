@@ -68,15 +68,88 @@ PCL 2.99 正式版移除了游戏下载入口。旧版本本身下载功能完�
 - 与 PCL 使用的技术栈一致（PCL 也已经有 C# 版本，目标同样是 net48）
 - 产物为单个 exe（约 880 KB），依赖库已内嵌
 
-## 从源码构建
+## 自己打包（不放心现成的 exe 就自己编）
+
+程序没有任何联网校验、混淆或后门：全部网络请求只访问 Mojang 官方接口与 BMCLAPI 镜像，
+可以在 `src/PCLDownloadHelper/Core/Net.cs`、`LoaderCatalog.cs` 里逐行核对。
+如果不想直接用 Release 里的 exe，按下面几步自己编译一个。
+
+### 1. 准备环境
+
+- Windows 10 / 11（64 位）
+- **.NET SDK 8 或更高**（只要 SDK，**不需要** Visual Studio）
+
+安装方式任选其一：
 
 ```powershell
-dotnet build src\PCLDownloadHelper\PCLDownloadHelper.csproj -c Release
-# 或
+# 方式一：winget
+winget install Microsoft.DotNet.SDK.8
+```
+
+```powershell
+# 方式二：官方安装包
+# 打开 https://dotnet.microsoft.com/download 下载 ".NET SDK 8.0" 的 Windows x64 安装包
+```
+
+装完**重新打开一个终端**，确认能输出版本号：
+
+```powershell
+dotnet --list-sdks
+```
+
+> 如果 `dotnet` 报错或列不出 SDK，说明只装了运行时或没重启终端。
+
+### 2. 获取源码
+
+```powershell
+git clone https://github.com/nDhnzr6r/PCL-Download-Helper.git
+cd PCL-Download-Helper
+```
+
+想编出和某个 Release 完全一致的版本，先切到对应标签：
+
+```powershell
+git checkout v2.1.0
+```
+
+### 3. 编译
+
+```powershell
+# 推荐：脚本会自动编译并把结果放到 dist 目录
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-产物在 `dist\PCL游戏下载助手.exe`。
+```powershell
+# 或者直接调用 dotnet build
+dotnet build src\PCLDownloadHelper\PCLDownloadHelper.csproj -c Release
+```
+
+### 4. 产物
+
+| 方式 | 位置 |
+| --- | --- |
+| `build.ps1` | `dist\PCL游戏下载助手.exe` |
+| `dotnet build` | `src\PCLDownloadHelper\bin\Release\net48\PCLDownloadHelper.exe` |
+
+产物是**单个 exe，约 876 KB**，不需要附带任何 DLL（Newtonsoft.Json 已作为内嵌资源打进 exe，
+运行时由 `App.xaml.cs` 里的 `AssemblyResolve` 加载）。
+
+### 5. 确认是你要的那个版本
+
+- 右键 exe → 属性 → 详细信息：「产品名称」应为 **PCL游戏下载助手**，「文件版本」应为 **2.1.0.0**
+- 或者直接双击运行，首次启动会先弹出使用须知
+- 参考大小：官方 Release 的 exe 是 **896,512 字节**（不同 SDK 版本编译结果会有几十字节差异，属正常）
+
+### 6. 常见问题
+
+| 现象 | 原因 / 处理 |
+| --- | --- |
+| `dotnet` 不是内部或外部命令 | SDK 没装，或装完没有重开终端 |
+| `NETSDK1045` / 找不到 net48 | SDK 太旧，装 .NET SDK 8 或更高 |
+| 编译报找不到 `Newtonsoft.Json` | 直接调用了 `csc`；请用 `dotnet build`，会自动还原 NuGet 包 |
+| 想改 exe 名字或图标 | 改 `PCLDownloadHelper.csproj` 的 `AssemblyTitle`、`Product`、`ApplicationIcon`，以及 `build.ps1` 里的输出文件名 |
+
+> 源码以 GPL-3.0 发布，你可以自己编译、修改并再分发，只需保留同样的许可证。
 
 ## 目录结构
 
