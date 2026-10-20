@@ -1,0 +1,13 @@
+﻿__pycache__/
+*.py[cod]
+build/
+dist/
+*.spec
+.testmc/
+.tmptest.jar*
+.shot.png
+.pcl.png
+.gui_*.log
+.testmc.log
+说明
+
