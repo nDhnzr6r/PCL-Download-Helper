@@ -1,95 +1,87 @@
-﻿# PCL 下载助手
+# PCL修复下载
 
-PCL 2.99 正式版移除了 Minecraft 下载入口（更新日志：「为遵守相关法律法规，PCL 暂时不再提供 MC 下载功能」）。
-这个工具用来补回这部分能力，分两种情况：
+**PCL = Play Minecraft Lever**
 
-- **启动器是 2.14 或更早的版本**：一键关闭启动器的自动更新，避免它被升级到 2.99 之后下载入口消失。
-- **启动器已经是 2.99，或想直接装游戏**：内置下载器，把原版、Fabric、Quilt 版本直接安装到 PCL 的游戏目录，装完重新打开 PCL 就能在版本列表里看到。
+把 Minecraft 直接装进启动器的游戏目录，并在需要时关掉启动器的自动更新，保住下载入口。
+
+> **本程序与游戏启动器 PCL（Plain Craft Launcher）没有任何关系。**
+> 它不是 PCL 的官方组件、分支、插件或附属工具，与 PCL 作者也没有隶属、授权或合作关系。名称里的 PCL 指 **Play Minecraft Lever**。程序只会按你的选择读写本机启动器的配置文件与游戏目录。
 
 ![界面](docs/screenshot.png)
 
-## 下载
-
-[最新版本](https://github.com/nDhnzr6r/PCL-Download-Helper/releases/latest) 提供打包好的单文件 exe，双击即用，无需安装。
+![加载器](docs/screenshot-loader.png)
 
 ## 功能
 
 | 模块 | 说明 |
 | --- | --- |
-| 启动器检测 | 自动在本机浅层目录中查找 `Plain Craft Launcher 2.exe`，读取文件版本，也可以手动选择文件夹 |
-| 一键修复 | 向 `PCL\Setup.ini` 写入 `SystemSystemUpdate:3`（不存在则新增），关闭更新提示，阻止自动升级 |
-| 版本下载 | 正式版、快照、全部历史版本，支持搜索，实时显示进度、速度与剩余量 |
-| 加载器 | 安装原版后可直接追加 Fabric 或 Quilt，自动解析并下载对应依赖 |
-| 下载源 | 默认优先国内镜像（BMCLAPI），镜像节点异常时自动回退官方源 |
-| 完整性 | 按 SHA-1 与文件大小校验，已存在的文件自动跳过，只补缺失的部分 |
+| 版本下载 | 正式版、快照、远古版本，支持搜索，实时进度、速度与取消 |
+| 加载器 | Forge、NeoForge、Fabric、Quilt；Fabric 可勾选同时安装 Fabric API |
+| 下载源 | 默认优先 BMCLAPI 国内镜像，节点异常自动切回官方源 |
+| 完整性 | SHA-1 与文件大小校验，已存在的文件跳过，只补缺失部分 |
+| 下载修复 | 可修复的启动器一键把更新提示设为关闭，避免自动升级后失去下载入口 |
+| 界面 | 与 PCL 同一套视觉语言：蓝色标题栏、浅蓝背景、白色圆角卡片 |
 
 ## 使用
 
-1. 运行 `PCL-Download-Helper.exe`。
-2. 程序会自动找到 PCL；没有找到时点「选择文件夹」，选中放有 `Plain Craft Launcher 2.exe` 的目录。
-3. 左侧会显示启动器版本与状态：
-   - 显示「可修复」时，点「一键修复」，然后重启 PCL（修复前请先退出 PCL，否则设置会被覆盖）。
-   - 显示「已修复」说明更新提示已关闭，下载入口不会因为升级而消失。
-   - 显示「下载已关闭」表示当前是 2.99 及之后的版本，直接在右侧下载游戏即可。
-4. 右侧选择版本、选择加载器，点「下载」。下载完成后重新打开 PCL，新版本会出现在版本选择列表里。
+1. 运行 `PCL修复下载.exe`，不需要安装。
+2. 首次启动会自动查找 PCL 启动器，也可以点左下角「设置」里的「选择文件夹」手动指定。
+3. 启动器状态可修复时会弹一次提示：可以选「启用修复」，也可以选「暂不修复」，选择后就再也不会打扰你。
+4. 在「下载游戏」里选一个版本，进入加载器页面，选好加载器（和版本）后点「开始下载」。
+5. 装完重新打开启动器，新版本就在版本选择列表里。
 
-> 首次启动会从 Mojang 或镜像获取版本清单，需要联网。
+## 关于「修复下载」
 
-## 运行环境
+PCL 2.99 正式版移除了游戏下载入口。旧版本本身下载功能完好，只是默认会在有新版本时自动升级。
+修复做的事只有一件：把 `PCL\Setup.ini` 里的 `SystemSystemUpdate` 写成 `3`（关闭更新提示），让启动器停在当前版本。
 
-- Windows 10 / 11，64 位
-- 游戏启动仍然由 PCL 负责，Java 由 PCL 自行匹配
+对已经是 2.99 的启动器没有可用的配置开关，这种情况直接用本程序下载游戏即可。
 
-## 从源码运行
+源码层面的对比见 [docs/pcl-download-analysis.md](docs/pcl-download-analysis.md)。
+
+## 技术栈
+
+- C# + WPF，目标框架 .NET Framework 4.8（Windows 10/11 自带，无需安装运行时）
+- 与 PCL 使用的技术栈一致，后续维护可以对照 PCL 的 C# 源码
+- 产物为单个 exe（约 900 KB），依赖库已内嵌
+
+## 从源码构建
 
 ```powershell
-pip install -r requirements.txt
-python -m app
-```
-
-## 打包
-
-```powershell
+dotnet build src\PCLDownloadHelper\PCLDownloadHelper.csproj -c Release
+# 或
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-产物在 `dist\PCL下载助手.exe`（单文件，约 37 MB）。
+产物在 `dist\PCL修复下载.exe`。
 
 ## 目录结构
 
 ```
-app/
-  core/
-    pcl.py         启动器定位、版本读取、Setup.ini 修复
-    setupini.py    Setup.ini 读写（保留原有键序与换行）
-    net.py         下载客户端：镜像回退、重试、卡死连接回收、SHA-1 校验
-    mcmeta.py      版本元数据解析：规则、依赖库、资源索引
-    installer.py   安装流程与原版 / 加载器下载
-    loaders.py     Fabric / Quilt 解析
-    sources.py     镜像地址改写
-    config.py      本地配置
-  ui/
-    window.py      主窗口
-    version_list.py 自绘版本列表与滚动条
-    theme.py       配色与字体
-  main.py          入口
-tools/             图标生成、命令行安装、完整性校验
-docs/              源码对比分析、界面截图
+src/PCLDownloadHelper/
+  Core/
+    PclInstall.cs     启动器定位、版本识别、Setup.ini 修复
+    SetupIni.cs       Setup.ini 读写（保留键序与换行）
+    Net.cs            下载客户端：镜像回退、重试、卡死回收、SHA-1 校验
+    McMeta.cs         版本元数据：规则、依赖库、资源索引
+    Installer.cs      安装流程与原版 / 加载器安装
+    LoaderCatalog.cs  各加载器的版本列表与安装包地址
+    JavaRuntime.cs    查找本机 Java，供 Forge / NeoForge 安装程序使用
+    AppConfig.cs      本地配置
+  UI/
+    MainWindow.xaml   主窗口（版本列表、加载器选择、进度、设置）
+    NoticeDialog.xaml 提示框
+    Models.cs         列表项与图标模板选择器
+  App.xaml           全局样式与配色
+assets/              图标
+docs/                截图与源码分析
 ```
 
-## 原理
+## 已知限制
 
-PCL 2.99 在 `ModSecret.vb` 中新增了 `RestrictMcDownload = True`，并在下载页、整合包安装、版本修改处加了拦截，所以这个版本没有可用的配置开关能绕开限制。
-
-PCL 的更新策略保存在 `PCL\Setup.ini` 的 `SystemSystemUpdate` 里：默认值 0 表示「在有新版本时自动下载」，3 表示「关闭更新提示」。早期的 PCL 下载功能本身完好，只是会被自动更新成 2.99。把它设为 3，启动器就停留在当前版本，下载入口继续可用。
-
-详细的源码对比见 [docs/pcl-download-analysis.md](docs/pcl-download-analysis.md)。
-
-## 说明
-
-- 只使用 Mojang 官方接口与 BMCLAPI 公开镜像，不接触任何第三方账号或启动器配置之外的目录。
-- 下载器只做「把文件放到位」，账号、Java、启动参数、模组管理仍由 PCL 处理。
-- 下载的内容版权归 Mojang 与对应加载器作者所有，请使用正版账号游玩。
+- OptiFine、LiteLoader 暂未支持：它们的安装程序只能用图形界面，需要额外做无界面注入，后续再补。
+- 加载器安装依赖本机已安装的 Java（Forge/NeoForge）；Fabric、Quilt 只需要下载文件，不需要 Java。
+- 只负责把文件放到位，账号登录、Java 版本选择、启动参数仍由启动器负责。
 
 ## 许可
 

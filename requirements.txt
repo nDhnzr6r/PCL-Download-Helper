@@ -1,4 +1,0 @@
-﻿# 运行依赖
-customtkinter>=6.0.0
-requests>=2.31.0
-pillow>=10.0.0

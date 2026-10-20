@@ -1,0 +1,371 @@
+<Window x:Class="PclDownloadHelper.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:PclDownloadHelper.UI"
+        Title="PCL修复下载" Width="1020" Height="680" MinWidth="940" MinHeight="620"
+        WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize"
+        Background="#FCFDFF" Icon="pack://application:,,,/Assets/icon.ico">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0"
+                      CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+
+        <Style x:Key="NavItem" TargetType="RadioButton">
+            <Setter Property="Height" Value="46" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+            <Setter Property="FontSize" Value="14.5" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Margin="10,2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="4" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="Bar" Grid.Column="0" Width="3" CornerRadius="2" Background="Transparent"
+                                        VerticalAlignment="Center" Height="18" HorizontalAlignment="Left" />
+                                <TextBlock x:Name="Icon" Grid.Column="1" Text="{TemplateBinding Tag}"
+                                           FontFamily="Segoe MDL2 Assets" FontSize="15" Margin="12,0,0,0"
+                                           VerticalAlignment="Center" Foreground="#4B5560" />
+                                <ContentPresenter Grid.Column="2" Margin="10,0,0,0" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBg}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bar" Property="Background" Value="{StaticResource Accent}" />
+                                <Setter TargetName="Icon" Property="Foreground" Value="{StaticResource Accent}" />
+                                <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SlimProgress" TargetType="ProgressBar">
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Foreground" Value="{StaticResource Accent}" />
+            <Setter Property="Background" Value="#DCEEFF" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <Grid x:Name="PART_Track">
+                                <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}" CornerRadius="4"
+                                        HorizontalAlignment="Left" />
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="CubeRelease">
+            <Grid Width="30" Height="30">
+                <Polygon Points="0,7 15,0 30,7 15,15" Fill="#7DC24B" />
+                <Polygon Points="0,7 15,15 15,29 0,21" Fill="#8A5A32" />
+                <Polygon Points="15,15 30,7 30,21 15,29" Fill="#6E4425" />
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="CubeSnapshot">
+            <Grid Width="30" Height="30">
+                <Polygon Points="0,7 15,0 30,7 15,15" Fill="#B78BF2" />
+                <Polygon Points="0,7 15,15 15,29 0,21" Fill="#6E5A94" />
+                <Polygon Points="15,15 30,7 30,21 15,29" Fill="#57466F" />
+            </Grid>
+        </DataTemplate>
+
+        <ui:VersionIconSelector x:Key="VersionIcon" Release="{StaticResource CubeRelease}" Snapshot="{StaticResource CubeSnapshot}" />
+
+        <DataTemplate x:Key="VersionRow">
+            <Grid Height="56" Margin="10,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ContentControl Grid.Column="0" Content="{Binding}" ContentTemplateSelector="{StaticResource VersionIcon}"
+                                VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="14,0,10,0">
+                    <TextBlock Text="{Binding Id}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" />
+                    <TextBlock Text="{Binding Subtitle}" FontSize="12.5" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="已安装" FontSize="12" Foreground="{StaticResource Success}" Margin="0,0,10,0"
+                               Visibility="{Binding InstalledVisibility}" />
+                    <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#A9C6E0" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+    </Window.Resources>
+
+    <Border x:Name="RootBorder" Background="#FCFDFF" BorderBrush="#A9D2F2" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="44" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- 标题栏 -->
+            <Grid Grid.Row="0" Background="{StaticResource TitleBar}" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center">
+                    <Border Width="22" Height="22" CornerRadius="5" Background="#33FFFFFF">
+                        <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="White"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="PCL修复下载" Foreground="White" FontSize="14" FontWeight="SemiBold"
+                               Margin="10,0,0,0" VerticalAlignment="Center" />
+                    <TextBlock Text="Play Minecraft Lever" Foreground="#B8DBFF" FontSize="11.5"
+                               Margin="10,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Style="{StaticResource CaptionButton}" Content="&#xE921;" Click="Minimize_Click" ToolTip="最小化" />
+                    <Button Style="{StaticResource CaptionButton}" Content="&#xE922;" Click="Maximize_Click" ToolTip="最大化" />
+                    <Button Style="{StaticResource CloseButton}" Content="&#xE8BB;" Click="Close_Click" ToolTip="关闭" />
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="190" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- 侧边栏 -->
+                <Border Grid.Column="0" Background="#FCFDFF" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="游戏" FontSize="11.5" Foreground="#9AA6B2" Margin="26,18,0,8" />
+                        <StackPanel Grid.Row="1">
+                            <RadioButton x:Name="NavDownload" Style="{StaticResource NavItem}" Tag="&#xE896;"
+                                         Content="下载游戏" IsChecked="True" Checked="Nav_Checked" />
+                            <RadioButton x:Name="NavSettings" Style="{StaticResource NavItem}" Tag="&#xE713;"
+                                         Content="设置" Checked="Nav_Checked" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="3" Margin="22,0,16,16">
+                            <TextBlock Text="v2.0.0" FontSize="11" Foreground="#A9B4BF" />
+                            <TextBlock x:Name="SidebarPath" FontSize="10.5" Foreground="#B8C2CC" TextWrapping="Wrap"
+                                       Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- 内容区 -->
+                <Grid Grid.Column="1" Background="{StaticResource PageBackground}">
+
+                    <!-- 版本列表 -->
+                    <Grid x:Name="PageDownload" Margin="24,18,24,18">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="下载 Minecraft" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" />
+                            <TextBlock Text="选择版本后安装到启动器的游戏目录，装完重新打开启动器即可看到"
+                                       FontSize="12.5" Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0" />
+                        </StackPanel>
+
+                        <Grid Grid.Row="1" Margin="0,16,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="300" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="SearchBox" Grid.Column="0" Style="{StaticResource SearchBox}" Tag="搜索版本号"
+                                     TextChanged="SearchBox_TextChanged" />
+                            <ComboBox x:Name="TypeFilter" Grid.Column="1" Style="{StaticResource AppComboBox}" Width="112"
+                                      Margin="10,0,0,0" SelectionChanged="TypeFilter_SelectionChanged" />
+                            <Button x:Name="RefreshButton" Grid.Column="3" Content="重新获取版本列表"
+                                    Style="{StaticResource LinkButton}" VerticalAlignment="Center" Click="Refresh_Click" />
+                        </Grid>
+
+                        <Border Grid.Row="2" Style="{StaticResource Card}" Padding="4,6">
+                            <Grid>
+                                <ListBox x:Name="VersionList" Background="Transparent" BorderThickness="0"
+                                         ItemContainerStyle="{StaticResource RowItem}" ItemTemplate="{StaticResource VersionRow}"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         MouseDoubleClick="VersionList_MouseDoubleClick"
+                                         SelectionChanged="VersionList_SelectionChanged"
+                                         VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                                    <ListBox.Resources>
+                                        <Style TargetType="ScrollBar" BasedOn="{StaticResource ThinScrollBar}" />
+                                    </ListBox.Resources>
+                                </ListBox>
+                                <TextBlock x:Name="ListPlaceholder" Text="正在获取版本列表…" FontSize="13"
+                                           Foreground="{StaticResource TextSecondary}" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Grid.Row="3" x:Name="StatusText" FontSize="11.5" Foreground="{StaticResource TextSecondary}"
+                                   Margin="2,10,0,0" TextWrapping="Wrap" />
+                    </Grid>
+
+                    <!-- 加载器选择 -->
+                    <Grid x:Name="PageDetail" Margin="24,18,24,18" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Button Grid.Row="0" Content="←  返回版本列表" Style="{StaticResource LinkButton}"
+                                HorizontalAlignment="Left" Click="Back_Click" />
+
+                        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="18,14" Margin="0,10,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <ContentControl x:Name="DetailIcon" VerticalAlignment="Center" />
+                                <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock x:Name="DetailVersionName" FontSize="16" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimary}" />
+                                    <TextBlock x:Name="DetailVersionInfo" FontSize="12.5" Foreground="{StaticResource TextSecondary}"
+                                               Margin="0,2,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="2" Style="{StaticResource Card}" Padding="4,6" Margin="0,12,0,0">
+                            <ListBox x:Name="LoaderList" Background="Transparent" BorderThickness="0"
+                                     ItemContainerStyle="{StaticResource RowItem}" SelectionChanged="LoaderList_SelectionChanged">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Height="56" Margin="14,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextPrimary}" />
+                                                <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{StaticResource TextSecondary}"
+                                                           Margin="0,2,0,0" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Status}" FontSize="12" Foreground="{StaticResource TextSecondary}"
+                                                           Margin="0,0,10,0" />
+                                                <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#A9C6E0" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                                <ListBox.Resources>
+                                    <Style TargetType="ScrollBar" BasedOn="{StaticResource ThinScrollBar}" />
+                                </ListBox.Resources>
+                            </ListBox>
+                        </Border>
+
+                        <Grid Grid.Row="3" Margin="0,14,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <ComboBox x:Name="LoaderVersionBox" Style="{StaticResource AppComboBox}" Width="190"
+                                          ToolTip="加载器版本" />
+                                <CheckBox x:Name="FabricApiCheck" Style="{StaticResource AppCheckBox}" Content="同时安装 Fabric API"
+                                          Margin="14,0,0,0" IsChecked="True" Visibility="Collapsed" />
+                            </StackPanel>
+                            <Button x:Name="StartButton" Content="开始下载" Style="{StaticResource PrimaryButton}"
+                                    HorizontalAlignment="Right" MinWidth="132" Click="Start_Click" />
+                        </Grid>
+                    </Grid>
+
+                    <!-- 进度 -->
+                    <Grid x:Name="PageProgress" Margin="24,18,24,18" Visibility="Collapsed">
+                        <Border Style="{StaticResource Card}" Padding="28,24" VerticalAlignment="Top">
+                            <StackPanel>
+                                <TextBlock x:Name="ProgressTitle" Text="正在安装" FontSize="18" FontWeight="Bold"
+                                           Foreground="{StaticResource TextPrimary}" />
+                                <TextBlock x:Name="ProgressStage" FontSize="13" Foreground="{StaticResource TextSecondary}"
+                                           Margin="0,8,0,0" TextWrapping="Wrap" />
+                                <ProgressBar x:Name="ProgressBar" Style="{StaticResource SlimProgress}" Margin="0,18,0,0"
+                                             Minimum="0" Maximum="1" Value="0" />
+                                <TextBlock x:Name="ProgressDetail" FontSize="11.5" Foreground="#8A9299" Margin="0,10,0,0"
+                                           TextWrapping="Wrap" />
+                                <StackPanel x:Name="ProgressActions" Orientation="Horizontal" Margin="0,20,0,0">
+                                    <Button x:Name="CancelButton" Content="取消" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                                </StackPanel>
+                                <StackPanel x:Name="DoneActions" Orientation="Horizontal" Margin="0,20,0,0" Visibility="Collapsed">
+                                    <Button Content="打开游戏目录" Style="{StaticResource PrimaryButton}" Click="OpenMcDir_Click" />
+                                    <Button Content="返回版本列表" Style="{StaticResource GhostButton}" Margin="12,0,0,0" Click="BackToDownload_Click" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- 设置 -->
+                    <ScrollViewer x:Name="PageSettings" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Margin="24,18,24,18">
+                        <StackPanel>
+                            <TextBlock Text="设置" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" />
+                            <TextBlock Text="启动器信息、下载源与关于" FontSize="12.5" Foreground="{StaticResource TextSecondary}"
+                                       Margin="0,5,0,16" />
+
+                            <Border Style="{StaticResource Card}" Padding="20,16">
+                                <StackPanel>
+                                    <TextBlock Text="启动器" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" />
+                                    <TextBlock x:Name="SettingsLauncherName" FontSize="12.5" Foreground="{StaticResource TextSecondary}"
+                                               Margin="0,8,0,0" TextWrapping="Wrap" />
+                                    <TextBlock x:Name="SettingsLauncherState" FontSize="12.5" Foreground="{StaticResource TextSecondary}"
+                                               Margin="0,4,0,0" TextWrapping="Wrap" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                        <Button Content="选择文件夹" Style="{StaticResource GhostButton}" Click="ChooseFolder_Click" />
+                                        <Button Content="打开目录" Style="{StaticResource GhostButton}" Margin="10,0,0,0" Click="OpenLauncherDir_Click" />
+                                        <Button x:Name="FixButton" Content="修复下载功能" Style="{StaticResource GhostButton}"
+                                                Margin="10,0,0,0" Click="Fix_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}" Padding="20,16" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="下载" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" />
+                                    <CheckBox x:Name="MirrorCheck" Style="{StaticResource AppCheckBox}" Content="优先使用国内镜像（BMCLAPI）"
+                                              Margin="0,12,0,0" Checked="MirrorCheck_Changed" Unchecked="MirrorCheck_Changed" />
+                                    <TextBlock Text="镜像节点响应异常时会自动改用官方源。" FontSize="11.5" Foreground="{StaticResource TextSecondary}"
+                                               Margin="26,4,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}" Padding="20,16" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="关于" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" />
+                                    <TextBlock Text="PCL修复下载 v2.0.0" FontSize="12.5" Foreground="{StaticResource TextSecondary}" Margin="0,10,0,0" />
+                                    <TextBlock Text="PCL = Play Minecraft Lever。本程序是独立的 Minecraft 下载器，用于把游戏安装到启动器目录，与游戏启动器 PCL（Plain Craft Launcher）没有任何隶属或合作关系。"
+                                               FontSize="11.5" Foreground="{StaticResource TextSecondary}" Margin="0,6,0,0"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Text="https://github.com/nDhnzr6r/PCL-Download-Helper" FontSize="11.5"
+                                               Foreground="{StaticResource Accent}" Margin="0,8,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

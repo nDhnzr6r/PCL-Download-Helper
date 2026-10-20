@@ -1,28 +1,16 @@
-﻿# 打包脚本：生成单文件可执行程序
-param(
-    [string]$Name = "PCL下载助手"
-)
-
+﻿# 打包脚本：编译并输出单文件 exe
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
-if (-not (Test-Path "assets\icon.ico")) {
-    python tools\make_icon.py
-}
+$dotnet = "C:\dotnet\dotnet.exe"
+if (-not (Test-Path $dotnet)) { $dotnet = "dotnet" }
 
-python -m PyInstaller `
-    --noconfirm `
-    --clean `
-    --windowed `
-    --onefile `
-    --name $Name `
-    --icon "assets\icon.ico" `
-    --add-data "assets;assets" `
-    --collect-data customtkinter `
-    --exclude-module tkinter.test `
-    run.py
+& $dotnet build "src\PCLDownloadHelper\PCLDownloadHelper.csproj" -c Release --nologo
+if ($LASTEXITCODE -ne 0) { throw "编译失败" }
 
-if ($LASTEXITCODE -ne 0) { throw "打包失败" }
+New-Item -ItemType Directory -Force dist | Out-Null
+$source = "src\PCLDownloadHelper\bin\Release\net48\PCLDownloadHelper.exe"
+Copy-Item $source "dist\PCL修复下载.exe" -Force
 
-$target = Join-Path $PSScriptRoot "dist\$Name.exe"
-Write-Host "已生成：$target"
+$size = [math]::Round((Get-Item "dist\PCL修复下载.exe").Length / 1KB)
+Write-Host "已生成：dist\PCL修复下载.exe（$size KB）"

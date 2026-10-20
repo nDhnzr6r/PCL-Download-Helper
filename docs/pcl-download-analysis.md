@@ -126,7 +126,7 @@ https://piston-meta.mojang.com            → https://bmclapi2.bangbang93.com
 https://piston-data.mojang.com            → https://bmclapi2.bangbang93.com
 ```
 
-工具里的 `app/core/sources.py` 与 `app/core/net.py` 复刻了这套规则，并按「镜像优先、失败回退官方」的顺序取流。
+本程序的 `src/PCLDownloadHelper/Core/Net.cs` 复刻了这套规则，并按「镜像优先、失败回退官方」的顺序取流。
 
 ## 5. 更新设置与「修复」的关系
 
