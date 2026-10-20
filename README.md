@@ -14,6 +14,18 @@
 
 **如果这个工具有用，欢迎点个 ⭐ Star**，这是对作者最大的鼓励。
 
+<p align="center">
+  <img src="https://img.shields.io/github/stars/nDhnzr6r/PCL-Download-Helper?style=flat-square&label=Star" alt="Star 数" />
+  <img src="https://visitor-badge.laobi.icu/badge?page_id=nDhnzr6r.PCL-Download-Helper" alt="访问量" />
+  <img src="https://img.shields.io/github/downloads/nDhnzr6r/PCL-Download-Helper/total?style=flat-square&label=下载量" alt="下载量" />
+</p>
+
+### Star 趋势
+
+<a href="https://star-history.com/#nDhnzr6r/PCL-Download-Helper&Date">
+  <img src="https://api.star-history.com/svg?repos=nDhnzr6r/PCL-Download-Helper&type=Date" alt="Star 趋势" width="720" />
+</a>
+
 ![界面](docs/screenshot.png)
 
 ![加载器](docs/screenshot-loader.png)
