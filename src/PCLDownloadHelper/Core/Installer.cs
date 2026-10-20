@@ -11,7 +11,7 @@ public sealed class InstallOptions
     public VersionEntry Entry { get; init; } = new();
     public LoaderKind Loader { get; init; }
     public string? LoaderVersion { get; init; }
-    public bool InstallFabricApi { get; init; }
+    public FabricApiVersion? FabricApi { get; init; }
 }
 
 public sealed class InstallResult
@@ -278,21 +278,14 @@ public sealed class Installer
         File.WriteAllText(Path.Combine(targetDir, folder + ".json"),
             profile.ToString(Formatting.None), new UTF8Encoding(false));
 
-        if (options.InstallFabricApi && options.Loader == LoaderKind.Fabric)
+        if (options.FabricApi != null && options.Loader == LoaderKind.Fabric)
         {
-            _tracker.SetDetail("正在安装 Fabric API");
-            var api = await LoaderCatalog.FabricApiAsync(_http, versionId, token).ConfigureAwait(false);
-            if (api == null)
-            {
-                _note?.Invoke("没有找到匹配的 Fabric API，已跳过");
-            }
-            else
-            {
-                var modsDir = Path.Combine(targetDir, "mods");
-                Directory.CreateDirectory(modsDir);
-                await _http.DownloadAsync(api.Value.Url, Path.Combine(modsDir, api.Value.FileName), null, null,
-                    new Progress<long>(_tracker.AddBytes), token).ConfigureAwait(false);
-            }
+            _tracker.SetDetail($"正在安装 Fabric API {options.FabricApi.Version}");
+            var modsDir = Path.Combine(targetDir, "mods");
+            Directory.CreateDirectory(modsDir);
+            await _http.DownloadAsync(options.FabricApi.Url,
+                Path.Combine(modsDir, options.FabricApi.FileName), null, null,
+                new Progress<long>(_tracker.AddBytes), token).ConfigureAwait(false);
         }
         return folder;
     }

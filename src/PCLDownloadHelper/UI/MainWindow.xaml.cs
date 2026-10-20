@@ -20,8 +20,11 @@ public partial class MainWindow : Window
     private HashSet<string> _installed = new(StringComparer.OrdinalIgnoreCase);
     private List<LoaderOption> _loaders = new();
     private PclInstall? _pcl;
+    private string? _gameDir;
+    private string _gameDirSource = "";
     private VersionItem? _selected;
     private LoaderOption? _loader;
+    private List<FabricApiVersion> _fabricApiVersions = new();
     private CancellationTokenSource? _cts;
     private bool _busy;
     private bool _suppressSelection;
@@ -57,49 +60,95 @@ public partial class MainWindow : Window
         MirrorCheck.IsChecked = _config.PreferMirror;
         NavDownload.IsChecked = true;
 
-        await RestoreLauncherAsync().ConfigureAwait(true);
+        if (!_config.DisclaimerAccepted)
+        {
+            var accepted = NoticeDialog.Show(this, "使用前请了解",
+                "· 本程序是个人开发的第三方工具，与 PCL（Plain Craft Launcher）、HMCL 等游戏启动器及其作者" +
+                "没有任何关系，也没有获得任何授权。\n\n" +
+                "· 程序下载的文件来自 Mojang 官方服务器或公开镜像，仅供学习和研究使用，请在 24 小时内删除。\n\n" +
+                "· 请支持正版 Minecraft，通过官方渠道购买游戏。",
+                "我已了解并继续");
+            if (!accepted)
+            {
+                System.Windows.Application.Current.Shutdown();
+                return;
+            }
+            _config.DisclaimerAccepted = true;
+            _config.Save();
+        }
+
+        await RestoreLaunchersAsync().ConfigureAwait(true);
         await LoadManifestAsync().ConfigureAwait(true);
         UpdateSettingsCard();
     }
 
-    // ---------- 启动器 ----------
+    // ---------- 启动器与游戏目录 ----------
 
-    private async Task RestoreLauncherAsync()
+    private async Task RestoreLaunchersAsync()
     {
-        var saved = _config.PclExe;
-        if (!string.IsNullOrEmpty(saved) && File.Exists(saved))
+        var pclPath = _config.PclExe;
+        if (string.IsNullOrEmpty(pclPath) || !File.Exists(pclPath))
         {
-            SetLauncher(saved);
-            return;
+            SetStatus("正在查找启动器…");
+            pclPath = await Task.Run(() => PclInstall.Scan(TimeSpan.FromSeconds(3)).FirstOrDefault())
+                .ConfigureAwait(true);
         }
-        SetStatus("正在查找启动器…");
-        var found = await Task.Run(() => PclInstall.Scan(TimeSpan.FromSeconds(4))).ConfigureAwait(true);
-        if (found.Count > 0)
+        if (!string.IsNullOrEmpty(pclPath) && File.Exists(pclPath)) ApplyPcl(pclPath);
+
+        var hmcl = _config.HmclExe;
+        if (string.IsNullOrEmpty(hmcl) || !File.Exists(hmcl))
         {
-            SetLauncher(found[0]);
-            return;
+            hmcl = await Task.Run(() => HmclInstall.Scan(TimeSpan.FromSeconds(2))).ConfigureAwait(true);
         }
-        SetStatus("未找到启动器，可在「设置」中选择所在文件夹");
+        if (!string.IsNullOrEmpty(hmcl) && File.Exists(hmcl))
+        {
+            _config.HmclExe = hmcl;
+            _config.Save();
+        }
+
+        if (!string.IsNullOrEmpty(_config.GameDir) && Directory.Exists(_config.GameDir))
+        {
+            SetGameDir(_config.GameDir!, "手动选择");
+        }
+        else if (_pcl != null)
+        {
+            SetGameDir(_pcl.McDir, "来自 PCL 启动器");
+        }
+        else if (!string.IsNullOrEmpty(hmcl))
+        {
+            var dir = HmclInstall.ResolveGameDir(hmcl);
+            if (!string.IsNullOrEmpty(dir)) SetGameDir(dir, "来自 HMCL 启动器");
+        }
+
+        if (_gameDir == null)
+        {
+            SetStatus("没有找到启动器，请在设置里选择游戏目录");
+            GameDirText.Text = "尚未选择";
+            GameDirSource.Text = "没有找到 PCL 或 HMCL，请在设置里指定游戏目录";
+        }
     }
 
-    private void SetLauncher(string exePath)
+    private void ApplyPcl(string exePath)
     {
         var install = PclInstall.Load(exePath);
-        if (install == null)
-        {
-            SetStatus("读取启动器信息失败");
-            return;
-        }
+        if (install == null) return;
         _pcl = install;
         _config.PclExe = install.ExePath;
         _config.Save();
-        RefreshInstalled();
-        SidebarPath.Text = install.McDir;
-        UpdateSettingsCard();
-        SetStatus($"已连接启动器 {install.Name} {install.VersionText}");
-        // 等主窗口真正显示后再弹提示，避免模态框把主窗口藏起来
+        SetStatus($"已连接 PCL {install.VersionText}");
         Dispatcher.BeginInvoke(new Action(() => { _ = PromptFixAsync(); }),
             System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+    }
+
+    private void SetGameDir(string path, string source)
+    {
+        _gameDir = path;
+        _gameDirSource = source;
+        SidebarPath.Text = path;
+        GameDirText.Text = path;
+        GameDirSource.Text = $"来源：{source}";
+        RefreshInstalled();
+        RefreshList();
     }
 
     private async Task PromptFixAsync()
@@ -110,9 +159,9 @@ public partial class MainWindow : Window
             if (_config.FixPrompted) return;
             _config.FixPrompted = true;
             _config.Save();
-            NoticeDialog.Show(this, "当前启动器无法修复",
-                $"检测到 {_pcl.Name} {_pcl.VersionText} 已移除游戏下载入口。\n\n" +
-                "本程序会直接把游戏文件安装到启动器目录，装完在启动器里照常启动即可。",
+            NoticeDialog.Show(this, "当前启动器无法阻挠更新",
+                $"检测到 {_pcl.Name} {_pcl.VersionText} 已经移除了游戏下载入口。\n\n" +
+                "本程序会直接把游戏文件安装到游戏目录，装完在启动器里照常启动即可。",
                 "开始下载");
             SetStatus("该启动器版本没有下载入口，可直接用本程序安装游戏");
             return;
@@ -126,11 +175,11 @@ public partial class MainWindow : Window
 
         _config.FixPrompted = true;
         _config.Save();
-        var fix = NoticeDialog.Show(this, "是否启用下载修复？",
+        var fix = NoticeDialog.Show(this, "是否阻挠启动器更新？",
             $"检测到 {_pcl.Name} {_pcl.VersionText}。\n\n" +
-            "启动器默认会在有新版本时自动下载更新，升级后会移除游戏下载入口。" +
-            "启用修复会把更新提示设为关闭，让当前版本保持可下载。",
-            "启用修复", "暂不修复");
+            "启动器默认会在有新版本时自动下载更新，升级后可能移除游戏下载入口。" +
+            "阻挠更新会把更新提示设为关闭，让当前版本保持可下载。",
+            "阻挠更新", "暂不阻挠");
         if (fix != true) return;
         ApplyFix();
     }
@@ -140,46 +189,63 @@ public partial class MainWindow : Window
         if (_pcl == null) return;
         if (PclInstall.IsRunning(_pcl.ExePath))
         {
-            NoticeDialog.Show(this, "启动器正在运行", "请先退出启动器，再执行修复。", "知道了");
+            NoticeDialog.Show(this, "启动器正在运行", "请先退出启动器，再执行阻挠更新。", "知道了");
             return;
         }
         try
         {
             _pcl.ApplyFix();
             UpdateSettingsCard();
-            SetStatus("已启用下载修复，重新打开启动器后生效");
+            SetStatus("已阻挠更新，重新打开启动器后生效");
         }
         catch (Exception ex)
         {
-            NoticeDialog.Show(this, "修复失败", ex.Message, "知道了");
+            NoticeDialog.Show(this, "阻挠更新失败", ex.Message, "知道了");
         }
     }
 
     private void UpdateSettingsCard()
     {
+        FixButton.IsEnabled = false;
         if (_pcl == null)
         {
-            SettingsLauncherName.Text = "尚未选择启动器";
-            SettingsLauncherState.Text = "选择 PCL 所在的文件夹，程序会把游戏安装到它的 .minecraft 目录。";
-            FixButton.IsEnabled = false;
-            return;
+            LauncherStateText.Text = "未检测到 PCL 启动器。HMCL 不需要阻挠更新，直接下载游戏即可。";
+            FixButton.Content = "未检测到 PCL";
         }
-        SettingsLauncherName.Text = $"{_pcl.Name}  {_pcl.VersionText}   ·   {_pcl.ExePath}";
-        SettingsLauncherState.Text = _pcl.Restricted
-            ? "该版本已移除游戏下载入口，本程序可直接安装游戏。"
-            : _pcl.Fixed
-                ? "下载修复已生效：启动器不会自动升级，下载入口保持可用。"
-                : "下载修复未启用：启动器可能自动升级到 2.99 并失去下载入口。";
-        FixButton.IsEnabled = _pcl.NeedsFix;
-        FixButton.Content = _pcl.Fixed ? "修复已生效" : "修复下载功能";
-        SidebarPath.Text = _pcl.McDir;
+        else if (_pcl.Restricted)
+        {
+            LauncherStateText.Text = $"PCL {_pcl.VersionText} 已移除游戏下载入口，本程序可以直接安装游戏。";
+            FixButton.Content = "该版本无法阻挠";
+        }
+        else if (_pcl.Fixed)
+        {
+            LauncherStateText.Text = $"PCL {_pcl.VersionText}：已阻挠更新，启动器不会自动升级。";
+            FixButton.Content = "已阻挠更新";
+        }
+        else
+        {
+            LauncherStateText.Text = $"PCL {_pcl.VersionText}：尚未阻挠更新，启动器可能会自动升级。";
+            FixButton.Content = "阻挠更新";
+            FixButton.IsEnabled = true;
+        }
+
+        if (_gameDir == null)
+        {
+            GameDirText.Text = "尚未选择";
+            GameDirSource.Text = "没有找到 PCL 或 HMCL，请在下方手动指定游戏目录";
+        }
+        else
+        {
+            GameDirText.Text = _gameDir;
+            GameDirSource.Text = $"来源：{_gameDirSource}";
+        }
     }
 
     private void RefreshInstalled()
     {
         _installed.Clear();
-        if (_pcl == null) return;
-        var root = Path.Combine(_pcl.McDir, "versions");
+        if (_gameDir == null) return;
+        var root = Path.Combine(_gameDir, "versions");
         if (!Directory.Exists(root)) return;
         try
         {
@@ -308,11 +374,14 @@ public partial class MainWindow : Window
             _loader = option;
             var needsVersion = option.Kind != LoaderKind.None;
             LoaderVersionBox.Visibility = needsVersion ? Visibility.Visible : Visibility.Collapsed;
-            FabricApiCheck.Visibility = option.Kind == LoaderKind.Fabric ? Visibility.Visible : Visibility.Collapsed;
+            var isFabric = option.Kind == LoaderKind.Fabric;
+            FabricApiCheck.Visibility = isFabric ? Visibility.Visible : Visibility.Collapsed;
+            if (!isFabric) FabricApiVersionBox.Visibility = Visibility.Collapsed;
             StartButton.IsEnabled = !needsVersion;
             if (!needsVersion) return;
 
             await LoadLoaderVersionsAsync(option).ConfigureAwait(true);
+            if (isFabric && FabricApiCheck.IsChecked == true) await LoadFabricApiVersionsAsync().ConfigureAwait(true);
         }
         catch (Exception ex)
         {
@@ -359,14 +428,55 @@ public partial class MainWindow : Window
             SetStatus($"该 Minecraft 版本没有可用的 {option.Name} 版本");
     }
 
+    private async Task LoadFabricApiVersionsAsync()
+    {
+        FabricApiVersionBox.ItemsSource = new[] { "正在获取版本…" };
+        FabricApiVersionBox.SelectedIndex = 0;
+        FabricApiVersionBox.IsEnabled = false;
+        FabricApiVersionBox.Visibility = Visibility.Visible;
+        if (_selected == null) return;
+        var versionId = _selected.Id;
+        List<FabricApiVersion> list;
+        try
+        {
+            list = await LoaderCatalog.FabricApiVersionsAsync(_http, versionId, CancellationToken.None)
+                .ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            list = new List<FabricApiVersion>();
+            SetStatus(ex.Message);
+        }
+        if (_loader?.Kind != LoaderKind.Fabric || _selected?.Id != versionId) return;
+        _fabricApiVersions = list;
+        FabricApiVersionBox.ItemsSource = list.Count > 0 ? list : new[] { "没有可用版本" };
+        FabricApiVersionBox.IsEnabled = list.Count > 0;
+        FabricApiVersionBox.SelectedIndex = list.Count > 0 ? 0 : -1;
+        if (list.Count == 0) SetStatus("没有找到与该版本匹配的 Fabric API");
+    }
+
+    private async void FabricApiCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (FabricApiCheck.IsChecked == true)
+        {
+            FabricApiVersionBox.Visibility = Visibility.Visible;
+            if (_fabricApiVersions.Count == 0) await LoadFabricApiVersionsAsync();
+        }
+        else
+        {
+            FabricApiVersionBox.Visibility = Visibility.Collapsed;
+        }
+    }
+
     // ---------- 安装 ----------
 
     private async void Start_Click(object sender, RoutedEventArgs e)
     {
         if (_busy || _selected == null || _loader == null) return;
-        if (_pcl == null)
+        if (string.IsNullOrEmpty(_gameDir))
         {
-            NoticeDialog.Show(this, "还没有选择启动器", "请先在「设置」中选择 PCL 所在的文件夹。", "知道了");
+            NoticeDialog.Show(this, "还没有游戏目录",
+                "没有找到 PCL 或 HMCL 启动器。请先在「设置」里选择游戏目录，再回来下载。", "知道了");
             return;
         }
 
@@ -375,7 +485,9 @@ public partial class MainWindow : Window
             Entry = _selected.Entry,
             Loader = _loader.Kind,
             LoaderVersion = LoaderVersionBox.SelectedItem as string,
-            InstallFabricApi = FabricApiCheck.IsChecked == true
+            FabricApi = _loader.Kind == LoaderKind.Fabric && FabricApiCheck.IsChecked == true
+                ? FabricApiVersionBox.SelectedItem as FabricApiVersion
+                : null
         };
 
         _busy = true;
@@ -392,7 +504,7 @@ public partial class MainWindow : Window
         var progress = new Progress<InstallProgress>(OnProgress);
         try
         {
-            var installer = new Installer(_pcl.McDir, _http, progress,
+            var installer = new Installer(_gameDir!, _http, progress,
                 text => Dispatcher.BeginInvoke(new Action(() => SetStatus(text))));
             var result = await Task.Run(() => installer.InstallAsync(options, _cts.Token)).ConfigureAwait(true);
             _busy = false;
@@ -449,7 +561,7 @@ public partial class MainWindow : Window
 
     private void OpenMcDir_Click(object sender, RoutedEventArgs e)
     {
-        if (_pcl != null) OpenPath(_pcl.McDir);
+        if (!string.IsNullOrEmpty(_gameDir)) OpenPath(_gameDir!);
     }
 
     private void BackToDownload_Click(object sender, RoutedEventArgs e)
@@ -461,25 +573,22 @@ public partial class MainWindow : Window
 
     // ---------- 设置与导航 ----------
 
-    private void ChooseFolder_Click(object sender, RoutedEventArgs e)
+    private void ChooseGameDir_Click(object sender, RoutedEventArgs e)
     {
         using var dialog = new System.Windows.Forms.FolderBrowserDialog
         {
-            Description = "选择 PCL 启动器所在的文件夹"
+            Description = "选择 Minecraft 的游戏目录（通常是 .minecraft 文件夹）"
         };
         if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
-        var exe = PclInstall.FindIn(dialog.SelectedPath);
-        if (exe == null)
-        {
-            NoticeDialog.Show(this, "没有找到启动器", "该文件夹里没有 PCL 启动器。", "知道了");
-            return;
-        }
-        SetLauncher(exe);
+        _config.GameDir = dialog.SelectedPath;
+        _config.Save();
+        SetGameDir(dialog.SelectedPath, "手动选择");
+        SetStatus("游戏目录已更新");
     }
 
-    private void OpenLauncherDir_Click(object sender, RoutedEventArgs e)
+    private void OpenGameDir_Click(object sender, RoutedEventArgs e)
     {
-        if (_pcl != null) OpenPath(_pcl.Root);
+        if (!string.IsNullOrEmpty(_gameDir)) OpenPath(_gameDir!);
     }
 
     private void Fix_Click(object sender, RoutedEventArgs e)
@@ -559,7 +668,8 @@ public partial class MainWindow : Window
     {
         try
         {
-            if (Directory.Exists(path)) Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"") { UseShellExecute = true });
+            if (Directory.Exists(path))
+                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"") { UseShellExecute = true });
         }
         catch (Exception)
         {

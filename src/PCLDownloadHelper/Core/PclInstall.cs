@@ -95,6 +95,12 @@ public sealed class PclInstall
     /// <summary>在本地磁盘浅层目录中查找启动器。</summary>
     public static List<string> Scan(TimeSpan budget)
     {
+        return Scan(budget, name => LauncherNames.Contains(name));
+    }
+
+    /// <summary>按文件名规则扫描可执行文件。</summary>
+    public static List<string> Scan(TimeSpan budget, Func<string, bool> match)
+    {
         var result = new List<string>();
         var deadline = DateTime.UtcNow + budget;
         foreach (var drive in DriveInfo.GetDrives())
@@ -112,7 +118,7 @@ public sealed class PclInstall
                     foreach (var file in Directory.EnumerateFiles(folder))
                     {
                         var name = Path.GetFileName(file).ToLowerInvariant();
-                        if (LauncherNames.Contains(name)) result.Add(file);
+                        if (match(name)) result.Add(file);
                     }
                 }
                 catch (Exception)

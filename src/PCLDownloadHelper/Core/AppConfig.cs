@@ -13,6 +13,9 @@ public sealed class AppConfig
     private static string FilePath => Path.Combine(Dir, "config.json");
 
     public string? PclExe { get; set; }
+    public string? HmclExe { get; set; }
+    public string? GameDir { get; set; }
+    public bool DisclaimerAccepted { get; set; }
     public bool FixPrompted { get; set; }
     public bool PreferMirror { get; set; } = true;
     public string? LastVersion { get; set; }

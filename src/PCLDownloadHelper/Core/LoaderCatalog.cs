@@ -13,6 +13,16 @@ public enum LoaderKind
     Quilt
 }
 
+/// <summary>一个可选的 Fabric API 版本。</summary>
+public sealed class FabricApiVersion
+{
+    public string Version { get; init; } = "";
+    public string Url { get; init; } = "";
+    public string FileName { get; init; } = "";
+
+    public override string ToString() => Version;
+}
+
 /// <summary>加载器版本列表与安装包地址。</summary>
 public static class LoaderCatalog
 {
@@ -121,26 +131,41 @@ public static class LoaderCatalog
         return await http.GetJsonAsync(string.Format(pattern, mcId, loaderVersion), token).ConfigureAwait(false);
     }
 
-    public static async Task<(string Url, string FileName)?> FabricApiAsync(Http http, string mcId, CancellationToken token)
+    /// <summary>列出与该 Minecraft 版本兼容的 Fabric API 版本，最新的在前。</summary>
+    public static async Task<List<FabricApiVersion>> FabricApiVersionsAsync(Http http, string mcId,
+        CancellationToken token)
     {
+        var result = new List<FabricApiVersion>();
         try
         {
             var url = string.Format(ModrinthFabricApi, mcId);
-            var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
+            using var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
             request.Headers.TryAddWithoutValidation("User-Agent", "PCLDownloadHelper/2.0 (github.com/nDhnzr6r)");
             using var client = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(20) };
             using var response = await client.SendAsync(request, token).ConfigureAwait(false);
-            if (!response.IsSuccessStatusCode) return null;
+            if (!response.IsSuccessStatusCode) return result;
             var json = JArray.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
-            var file = json.FirstOrDefault()?["files"]?.FirstOrDefault();
-            var download = file?["url"]?.ToString();
-            var name = file?["filename"]?.ToString();
-            return string.IsNullOrEmpty(download) ? null : (download, name ?? "fabric-api.jar");
+            foreach (var entry in json)
+            {
+                var version = entry["version_number"]?.ToString();
+                var file = entry["files"]?.FirstOrDefault(item => item["primary"]?.Value<bool>() == true)
+                           ?? entry["files"]?.FirstOrDefault();
+                var download = file?["url"]?.ToString();
+                var name = file?["filename"]?.ToString();
+                if (string.IsNullOrEmpty(version) || string.IsNullOrEmpty(download)) continue;
+                result.Add(new FabricApiVersion
+                {
+                    Version = version,
+                    Url = download,
+                    FileName = name ?? $"fabric-api-{version}.jar"
+                });
+            }
         }
         catch (Exception)
         {
-            return null;
+            // 获取失败时返回空列表，由界面提示
         }
+        return result;
     }
 
     private static Version VersionSort(string value)

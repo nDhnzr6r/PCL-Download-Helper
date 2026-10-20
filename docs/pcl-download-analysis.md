@@ -128,7 +128,7 @@ https://piston-data.mojang.com            → https://bmclapi2.bangbang93.com
 
 本程序的 `src/PCLDownloadHelper/Core/Net.cs` 复刻了这套规则，并按「镜像优先、失败回退官方」的顺序取流。
 
-## 5. 更新设置与「修复」的关系
+## 5. 更新设置与「阻挠更新」的关系
 
 `Pages/PageSetup/Settings.vb`
 
@@ -148,7 +148,7 @@ New Setting("SystemSystemUpdate", 0)
 默认值 0 意味着旧版启动器只要联网就会把自身更新到 2.99，随后下载入口按上文逻辑被关闭。
 把 `PCL\Setup.ini` 里的 `SystemSystemUpdate` 改成 `3` 后，启动器不再检查更新，停留在当前版本，下载功能保持不变。
 
-这就是「修复」的完整链路：**不是给 2.99 打补丁，而是让旧版本不再升级到 2.99。**
+这就是「阻挠更新」的完整链路：**不是给 2.99 打补丁，而是让旧版本不再升级到 2.99。**
 
 ## 6. 设置文件的写法
 
@@ -158,11 +158,11 @@ New Setting("SystemSystemUpdate", 0)
 If Not FileName.Contains(":\") Then FileName = $"{Paths.Base}PCL\{FileName}.ini"
 ```
 
-即设置文件固定在 `启动器目录\PCL\Setup.ini`，格式为 `键:值`，UTF-8 编码。工具按行读写，保留原有键顺序与换行风格，只改动目标键，不存在时追加一行。
+即设置文件固定在 `启动器目录\PCL\Setup.ini`，格式为 `键:值`，UTF-8 编码。程序按行读写，保留原有键顺序与换行风格，只改动目标键，不存在时追加一行。
 
 ## 7. 结论
 
 1. 2.99 的下载入口由编译期常量关闭，配置层面没有开关。
 2. 旧版本的下载实现完整，唯一的问题是默认会自动升级到 2.99。
-3. `SystemSystemUpdate=3` 切断自动升级，是旧版本最直接的修复方式。
+3. `SystemSystemUpdate=3` 切断自动升级，是旧版本最直接的阻挠更新方式。
 4. 对已经升到 2.99 的用户，只能把游戏文件直接装进 `.minecraft`，由启动器照常识别和启动——这正是本工具下载器做的事。

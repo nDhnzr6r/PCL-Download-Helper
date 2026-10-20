@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:PclDownloadHelper.UI"
-        Title="PCL修复下载" Width="1020" Height="680" MinWidth="940" MinHeight="620"
+        Title="PCL游戏下载助手" Width="1020" Height="680" MinWidth="940" MinHeight="620"
         WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize"
         Background="#FCFDFF" Icon="pack://application:,,,/Assets/icon.ico">
 
@@ -131,7 +131,7 @@
                         <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="White"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
-                    <TextBlock Text="PCL修复下载" Foreground="White" FontSize="14" FontWeight="SemiBold"
+                    <TextBlock Text="PCL游戏下载助手" Foreground="White" FontSize="14" FontWeight="SemiBold"
                                Margin="10,0,0,0" VerticalAlignment="Center" />
                     <TextBlock Text="Play Minecraft Lever" Foreground="#B8DBFF" FontSize="11.5"
                                Margin="10,0,0,0" VerticalAlignment="Center" />
@@ -166,7 +166,7 @@
                                          Content="设置" Checked="Nav_Checked" />
                         </StackPanel>
                         <StackPanel Grid.Row="3" Margin="22,0,16,16">
-                            <TextBlock Text="v2.0.0" FontSize="11" Foreground="#A9B4BF" />
+                            <TextBlock Text="v2.1.0" FontSize="11" Foreground="#A9B4BF" />
                             <TextBlock x:Name="SidebarPath" FontSize="10.5" Foreground="#B8C2CC" TextWrapping="Wrap"
                                        Margin="0,4,0,0" />
                         </StackPanel>
@@ -187,7 +187,7 @@
 
                         <StackPanel Grid.Row="0">
                             <TextBlock Text="下载 Minecraft" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" />
-                            <TextBlock Text="选择版本后安装到启动器的游戏目录，装完重新打开启动器即可看到"
+                            <TextBlock Text="选择版本后安装到游戏目录，装完重新打开启动器即可看到"
                                        FontSize="12.5" Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0" />
                         </StackPanel>
 
@@ -283,14 +283,22 @@
                         </Border>
 
                         <Grid Grid.Row="3" Margin="0,14,0,0">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                <ComboBox x:Name="LoaderVersionBox" Style="{StaticResource AppComboBox}" Width="190"
-                                          ToolTip="加载器版本" />
-                                <CheckBox x:Name="FabricApiCheck" Style="{StaticResource AppCheckBox}" Content="同时安装 Fabric API"
-                                          Margin="14,0,0,0" IsChecked="True" Visibility="Collapsed" />
-                            </StackPanel>
-                            <Button x:Name="StartButton" Content="开始下载" Style="{StaticResource PrimaryButton}"
-                                    HorizontalAlignment="Right" MinWidth="132" Click="Start_Click" />
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox x:Name="LoaderVersionBox" Grid.Column="0" Style="{StaticResource AppComboBox}" Width="190"
+                                      ToolTip="加载器版本" />
+                            <CheckBox x:Name="FabricApiCheck" Grid.Column="1" Style="{StaticResource AppCheckBox}"
+                                      Content="同时安装 Fabric API" Margin="14,0,0,0" IsChecked="True" Visibility="Collapsed"
+                                      Checked="FabricApiCheck_Changed" Unchecked="FabricApiCheck_Changed" />
+                            <ComboBox x:Name="FabricApiVersionBox" Grid.Column="2" Style="{StaticResource AppComboBox}" Width="190"
+                                      Margin="10,0,0,0" ToolTip="Fabric API 版本" Visibility="Collapsed" />
+                            <Button x:Name="StartButton" Grid.Column="4" Content="开始下载" Style="{StaticResource PrimaryButton}"
+                                    MinWidth="132" Click="Start_Click" />
                         </Grid>
                     </Grid>
 
@@ -321,21 +329,30 @@
                     <ScrollViewer x:Name="PageSettings" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Margin="24,18,24,18">
                         <StackPanel>
                             <TextBlock Text="设置" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" />
-                            <TextBlock Text="启动器信息、下载源与关于" FontSize="12.5" Foreground="{StaticResource TextSecondary}"
+                            <TextBlock Text="游戏目录、启动器与下载源" FontSize="12.5" Foreground="{StaticResource TextSecondary}"
                                        Margin="0,5,0,16" />
 
                             <Border Style="{StaticResource Card}" Padding="20,16">
                                 <StackPanel>
-                                    <TextBlock Text="启动器" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" />
-                                    <TextBlock x:Name="SettingsLauncherName" FontSize="12.5" Foreground="{StaticResource TextSecondary}"
+                                    <TextBlock Text="游戏目录" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" />
+                                    <TextBlock x:Name="GameDirText" FontSize="12.5" Foreground="{StaticResource TextSecondary}"
                                                Margin="0,8,0,0" TextWrapping="Wrap" />
-                                    <TextBlock x:Name="SettingsLauncherState" FontSize="12.5" Foreground="{StaticResource TextSecondary}"
+                                    <TextBlock x:Name="GameDirSource" FontSize="11.5" Foreground="#A0AAB4"
                                                Margin="0,4,0,0" TextWrapping="Wrap" />
                                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                        <Button Content="选择文件夹" Style="{StaticResource GhostButton}" Click="ChooseFolder_Click" />
-                                        <Button Content="打开目录" Style="{StaticResource GhostButton}" Margin="10,0,0,0" Click="OpenLauncherDir_Click" />
-                                        <Button x:Name="FixButton" Content="修复下载功能" Style="{StaticResource GhostButton}"
-                                                Margin="10,0,0,0" Click="Fix_Click" />
+                                        <Button Content="选择目录" Style="{StaticResource GhostButton}" Click="ChooseGameDir_Click" />
+                                        <Button Content="打开目录" Style="{StaticResource GhostButton}" Margin="10,0,0,0" Click="OpenGameDir_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}" Padding="20,16" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="启动器更新" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" />
+                                    <TextBlock x:Name="LauncherStateText" FontSize="12.5" Foreground="{StaticResource TextSecondary}"
+                                               Margin="0,8,0,0" TextWrapping="Wrap" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                        <Button x:Name="FixButton" Content="阻挠更新" Style="{StaticResource GhostButton}" Click="Fix_Click" />
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -353,9 +370,12 @@
                             <Border Style="{StaticResource Card}" Padding="20,16" Margin="0,12,0,0">
                                 <StackPanel>
                                     <TextBlock Text="关于" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" />
-                                    <TextBlock Text="PCL修复下载 v2.0.0" FontSize="12.5" Foreground="{StaticResource TextSecondary}" Margin="0,10,0,0" />
-                                    <TextBlock Text="PCL = Play Minecraft Lever。本程序是独立的 Minecraft 下载器，用于把游戏安装到启动器目录，与游戏启动器 PCL（Plain Craft Launcher）没有任何隶属或合作关系。"
+                                    <TextBlock Text="PCL游戏下载助手 v2.1.0" FontSize="12.5" Foreground="{StaticResource TextSecondary}" Margin="0,10,0,0" />
+                                    <TextBlock Text="PCL = Play Minecraft Lever。本程序是独立的 Minecraft 下载器，与 PCL（Plain Craft Launcher）、HMCL 等游戏启动器及其作者没有任何隶属、授权或合作关系。"
                                                FontSize="11.5" Foreground="{StaticResource TextSecondary}" Margin="0,6,0,0"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Text="下载的文件仅供学习研究使用，请在 24 小时内删除，请支持正版游戏。"
+                                               FontSize="11.5" Foreground="{StaticResource TextSecondary}" Margin="0,4,0,0"
                                                TextWrapping="Wrap" />
                                     <TextBlock Text="https://github.com/nDhnzr6r/PCL-Download-Helper" FontSize="11.5"
                                                Foreground="{StaticResource Accent}" Margin="0,8,0,0" />
