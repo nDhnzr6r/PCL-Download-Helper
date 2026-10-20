@@ -97,7 +97,9 @@ public partial class MainWindow : Window
         SidebarPath.Text = install.McDir;
         UpdateSettingsCard();
         SetStatus($"已连接启动器 {install.Name} {install.VersionText}");
-        _ = PromptFixAsync();
+        // 等主窗口真正显示后再弹提示，避免模态框把主窗口藏起来
+        Dispatcher.BeginInvoke(new Action(() => { _ = PromptFixAsync(); }),
+            System.Windows.Threading.DispatcherPriority.ApplicationIdle);
     }
 
     private async Task PromptFixAsync()

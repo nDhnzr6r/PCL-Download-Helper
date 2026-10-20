@@ -29,14 +29,12 @@ public partial class NoticeDialog : Window
     {
         _result = true;
         DialogResult = true;
-        Close();
     }
 
     private void Secondary_Click(object sender, RoutedEventArgs e)
     {
         _result = false;
         DialogResult = false;
-        Close();
     }
 
     private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
