@@ -457,14 +457,23 @@ public partial class MainWindow : Window
 
     private async void FabricApiCheck_Changed(object sender, RoutedEventArgs e)
     {
-        if (FabricApiCheck.IsChecked == true)
+        if (!IsLoaded) return; // 初始化阶段 XAML 里的 IsChecked 也会触发一次
+        try
         {
-            FabricApiVersionBox.Visibility = Visibility.Visible;
-            if (_fabricApiVersions.Count == 0) await LoadFabricApiVersionsAsync();
+            if (FabricApiCheck.IsChecked == true)
+            {
+                FabricApiVersionBox.Visibility = Visibility.Visible;
+                if (_fabricApiVersions.Count == 0) await LoadFabricApiVersionsAsync();
+            }
+            else
+            {
+                FabricApiVersionBox.Visibility = Visibility.Collapsed;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            FabricApiVersionBox.Visibility = Visibility.Collapsed;
+            App.Log(ex);
+            SetStatus(ex.Message);
         }
     }
 

@@ -18,7 +18,7 @@
     <Product>PCL游戏下载助手</Product>
     <Description>Play Minecraft Lever · 独立的 Minecraft 下载器</Description>
     <Company>nDhnzr6r</Company>
-    <Copyright>MIT License</Copyright>
+    <Copyright>GPL-3.0</Copyright>
     <SatelliteResourceLanguages>zh-Hans</SatelliteResourceLanguages>
     <Deterministic>true</Deterministic>
   </PropertyGroup>

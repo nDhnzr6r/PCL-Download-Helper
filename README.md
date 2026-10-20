@@ -104,4 +104,4 @@ docs/                  截图与源码分析
 
 ## 许可
 
-MIT
+GPL-3.0（GNU General Public License v3.0），完整条款见 [LICENSE](LICENSE)。
