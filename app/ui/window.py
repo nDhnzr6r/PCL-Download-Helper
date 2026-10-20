@@ -779,9 +779,10 @@ class App(ctk.CTk):
             result = event["result"]
             self._finish_download()
             installed = result["id"]
-            if installed in self.installed:
+            if any(item["id"] == installed for item in self.list.items):
                 self.list.select(installed)
-            self._message(f"已安装 {installed}，重新打开 PCL 即可在版本列表中看到")
+            loader_note = "" if result.get("vanilla") == installed else f"（基于 {result['vanilla']}）"
+            self._message(f"已安装 {installed}{loader_note}，重新打开 PCL 即可在版本列表中看到")
         elif kind == "error":
             self._finish_download()
             self._message(f"下载失败：{event['message']}", error=True)
