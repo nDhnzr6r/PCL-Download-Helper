@@ -1,4 +1,4 @@
-# PCL 下载助手
+﻿# PCL 下载助手
 
 PCL 2.99 正式版移除了 Minecraft 下载入口（更新日志：「为遵守相关法律法规，PCL 暂时不再提供 MC 下载功能」）。
 这个工具用来补回这部分能力，分两种情况：
@@ -7,6 +7,10 @@ PCL 2.99 正式版移除了 Minecraft 下载入口（更新日志：「为遵守
 - **启动器已经是 2.99，或想直接装游戏**：内置下载器，把原版、Fabric、Quilt 版本直接安装到 PCL 的游戏目录，装完重新打开 PCL 就能在版本列表里看到。
 
 ![界面](docs/screenshot.png)
+
+## 下载
+
+[最新版本](https://github.com/nDhnzr6r/PCL-Download-Helper/releases/latest) 提供打包好的单文件 exe，双击即用，无需安装。
 
 ## 功能
 
@@ -21,7 +25,7 @@ PCL 2.99 正式版移除了 Minecraft 下载入口（更新日志：「为遵守
 
 ## 使用
 
-1. 双击 `PCL下载助手.exe`。
+1. 运行 `PCL-Download-Helper.exe`。
 2. 程序会自动找到 PCL；没有找到时点「选择文件夹」，选中放有 `Plain Craft Launcher 2.exe` 的目录。
 3. 左侧会显示启动器版本与状态：
    - 显示「可修复」时，点「一键修复」，然后重启 PCL（修复前请先退出 PCL，否则设置会被覆盖）。
