@@ -17,14 +17,8 @@
 <p align="center">
   <img src="https://img.shields.io/github/stars/nDhnzr6r/PCL-Download-Helper?style=flat-square&label=Star" alt="Star 数" />
   <img src="https://visitor-badge.laobi.icu/badge?page_id=nDhnzr6r.PCL-Download-Helper" alt="访问量" />
-  <img src="https://img.shields.io/github/downloads/nDhnzr6r/PCL-Download-Helper/total?style=flat-square&label=下载量" alt="下载量" />
+  <img src="https://img.shields.io/github/downloads/nDhnzr6r/PCL-Download-Helper/total?style=flat-square&label=%E4%B8%8B%E8%BD%BD%E9%87%8F&color=blue" alt="下载量" />
 </p>
-
-### Star 趋势
-
-<a href="https://star-history.com/#nDhnzr6r/PCL-Download-Helper&Date">
-  <img src="https://api.star-history.com/svg?repos=nDhnzr6r/PCL-Download-Helper&type=Date" alt="Star 趋势" width="720" />
-</a>
 
 ![界面](docs/screenshot.png)
 
@@ -190,3 +184,9 @@ docs/                  截图与源码分析
 ## 许可
 
 GPL-3.0（GNU General Public License v3.0），完整条款见 [LICENSE](LICENSE)。
+
+## Star 趋势
+
+<a href="https://star-history.com/#nDhnzr6r/PCL-Download-Helper&Date">
+  <img src="https://api.star-history.com/svg?repos=nDhnzr6r/PCL-Download-Helper&type=Date" alt="Star 趋势" width="720" />
+</a>
